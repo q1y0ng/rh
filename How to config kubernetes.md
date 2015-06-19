@@ -1,114 +1,114 @@
-Environment request
+## Environment request
+* 1 vm for master 
+* 2 vms for minons
+* vms should at least 30GB free disk  
 
-    1 vm for master
-    2 vms for minons
-    vms should at least 30GB free disk
+## Install Kurbernetes
+1. enable repos if you have not done before:
 
-Install Kurbernetes
+   `subscription-manager repos --enalbe=rhel-7-server-extras-rpms`
 
-    enable repos if you have not done before:
+   `subscription-manager repos --enable=rhel-7-server-optional-rpms`
+2. Install following rpms on all vms:
 
-    subscription-manager repos --enalbe=rhel-7-server-extras-rpms
+   `yum install -y kubernetes docker etcd `
 
-    subscription-manager repos --enable=rhel-7-server-optional-rpms
+## Config Master Node
+* There are three files you need to config in master node:
 
-    Install following rpms on all vms:
+  `/etc/kubernetes/config`
 
-    yum install -y kubernetes docker etcd
+  `/etc/kubernetes/controller-manager`
 
-Config Master Node
+  `/etc/kubernetes/apiserver`
 
-    There are three files you need to config in master node:
+* Config `/etc/kubernetes/config`:
 
-    /etc/kubernetes/config
+`KUBE_LOGTOSTDERR="--logtostderr=true"`
 
-    /etc/kubernetes/controller-manager
+`KUBE_LOG_LEVEL="--v=0"`
 
-    /etc/kubernetes/apiserver
+`KUBE_ALLOW_PRIV="--allow_privileged=false"`
 
-    Config /etc/kubernetes/config:
+`KUBE_MASTER="--master=http://Master.example.com:8080"`
 
-KUBE_LOGTOSTDERR="--logtostderr=true"
+* Config `/etc/kubernetes/controller-manager`
 
-KUBE_LOG_LEVEL="--v=0"
+`KUBELET_ADDRESSES="--machines=Minion1.example.com, Minion2.example.com"`
 
-KUBE_ALLOW_PRIV="--allow_privileged=false"
+`KUBE_CONTROLLER_MANAGER_ARGS=""`
 
-KUBE_MASTER="--master=http://Master.example.com:8080"
+* Config `/etc/kubernetes/apiserver`
 
-    Config /etc/kubernetes/controller-manager
+`KUBE_API_ADDRESS="--address=0.0.0.0"`
 
-KUBELET_ADDRESSES="--machines=Minion1.example.com, Minion2.example.com"
+`KUBE_ETCD_SERVERS="--etcd_servers=http://Master.example.com"`
 
-KUBE_CONTROLLER_MANAGER_ARGS=""
+`KUBE_SERVICE_ADDRESSES="--portal_net=10.254.0.0/16"`
 
-    Config /etc/kubernetes/apiserver
+`KUBE_ADMISSION_CONTROL="--admission_control=NamespaceAutoProvision,LimitRanger,ResourceQuota"`
 
-KUBE_API_ADDRESS="--address=0.0.0.0"
+`KUBE_API_ARGS=""`
 
-KUBE_ETCD_SERVERS="--etcd_servers=http://Master.example.com"
+##Config Minion Nodes
+* There are four files you need to config in every minion node:
 
-KUBE_SERVICE_ADDRESSES="--portal_net=10.254.0.0/16"
+  `/etc/kubernetes/config`
 
-KUBE_ADMISSION_CONTROL="--admission_control=NamespaceAutoProvision,LimitRanger,ResourceQuota"
+  `/etc/kubernetes/proxy`
 
-KUBE_API_ARGS=""
-Config Minion Nodes
+  `/etc/kubernetes/kubelet`
 
-    There are four files you need to config in every minion node:
+  `/var/lib/kubelet/auth`
 
-    /etc/kubernetes/config
+* Config `/etc/kubernetes/config`
 
-    /etc/kubernetes/proxy
+`KUBE_LOGTOSTDERR="--logtostderr=true"`
 
-    /etc/kubernetes/kubelet
+`KUBE_LOG_LEVEL="--v=0"`
 
-    /var/lib/kubelet/auth
+`KUBE_ALLOW_PRIV="--allow_privileged=false"`
 
-    Config /etc/kubernetes/config
+`KUBE_MASTER="--master=http://Master.example.com:8080"`
 
-KUBE_LOGTOSTDERR="--logtostderr=true"
+* Config `/etc/kubernetes/proxy`
 
-KUBE_LOG_LEVEL="--v=0"
+`KUBE_PROXY_ARGS="--master=http://Master.example.com"`
 
-KUBE_ALLOW_PRIV="--allow_privileged=false"
+* Config `/etc/kubernetes/kubelet`
 
-KUBE_MASTER="--master=http://Master.example.com:8080"
+`KUBELET_ADDRESS="--address=0.0.0.0"`
 
-    Config /etc/kubernetes/proxy
+`KUBELET_HOSTNAME="--hostname_override=Minion.example.com"`
 
-KUBE_PROXY_ARGS="--master=http://Master.example.com"
+`KUBELET_API_SERVER="--api_servers=http://Master.example.com:8080"`
 
-    Config /etc/kubernetes/kubelet
+`KUBELET_ARGS=""`
 
-KUBELET_ADDRESS="--address=0.0.0.0"
+* Config  `/var/lib/kubelet/auth`
 
-KUBELET_HOSTNAME="--hostname_override=Minion.example.com"
+ `echo {} > /var/lib/kubelet/auth`
 
-KUBELET_API_SERVER="--api_servers=http://Master.example.com:8080"
+## Starting and enable services in Master node
+`for SERVICES in etcd kube-apiserver kube-controller-manager kube-scheduler; do systemctl restart $SERVICES; systemctl enable $SERVICES; systemctl status $SERVICES; done`
 
-KUBELET_ARGS=""
+## Starting and enable services in Minion node
+`for SERVICES in docker kube-proxy kubelet; do systemctl restart $SERVICES; systemctl enable $SERVICES; systemctl status $SERVICES; done`
 
-    Config /var/lib/kubelet/auth
+## Confirm if your environment is good to go:
 
-    echo {} > /var/lib/kubelet/auth
+* In master node, run following command:
 
-Starting and enable services in Master node
+`Kubectl get minions`
 
-for SERVICES in etcd kube-apiserver kube-controller-manager kube-scheduler; do systemctl restart $SERVICES; systemctl enable $SERVICES; systemctl status $SERVICES; done
-Starting and enable services in Minion node
+* If everything is good, you should be able to see following return means that your minion is ready:
 
-for SERVICES in docker kube-proxy kubelet; do systemctl restart $SERVICES; systemctl enable $SERVICES; systemctl status $SERVICES; done
-Confirm if your environment is good to go:
+`NAME                 LABELS                STATUS`
 
-    In master node, run following command:
+`Minion1.example.com   Schedulable   <none>    Ready`
 
-Kubectl get minions
+`Minion2.example.com   Schedulable   <none>    Ready`
 
-    If everything is good, you should be able to see following return means that your minion is ready:
 
-NAME LABELS STATUS
 
-Minion1.example.com Schedulable <none> Ready
 
-Minion2.example.com Schedulable <none> Ready
