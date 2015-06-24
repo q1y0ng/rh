@@ -5,14 +5,14 @@ If you are inside GFW in China and you will not be able to connecto to google se
 
 Please take following steps to fix this issue:
 
-*1 manually pull pause container from io.docker
+1 manually pull pause container from io.docker
 
 `docker pull docker.io/kubernetes/pause`
 
-*2 rename the images
+2 rename the images
 
 `docker tag docker.io/kubernetes/pause gcr.io/google_containers/pause:0.8.0`
 
-*3 manually start kubelet service and add flag --pod_infra_container_image. The following is an example how to start kubelet service manually:
+3 manually start kubelet service and add flag --pod_infra_container_image. The following is an example how to start kubelet service manually:
 
 `/usr/bin/kubelet --logtostderr=true --v=0 --address=10.66.208.230 --api_servers=10.66.208.164:8080 --hostname_override=10.66.208.230 --allow_privileged=false --auth_path=/var/lib/kubelet/auth --pod_infra_container_image="docker.io/kubernetes/pause:latest"--pod_infra_container_image="docker.io/kubernetes/pause:latest"`
