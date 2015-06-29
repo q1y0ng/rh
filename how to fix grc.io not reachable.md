@@ -13,6 +13,15 @@ Please take following steps to fix this issue:
 
 `docker tag docker.io/kubernetes/pause gcr.io/google_containers/pause:0.8.0`
 
-3 manually start kubelet service and add flag --pod_infra_container_image. The following is an example how to start kubelet service manually:
+3.
+
+Optiona A: Manually start kubelet service and add flag --pod_infra_container_image. The following is an example how to start kubelet service manually:
 
 `/usr/bin/kubelet --logtostderr=true --v=0 --address=10.66.208.230 --api_servers=10.66.208.164:8080 --hostname_override=10.66.208.230 --allow_privileged=false --auth_path=/var/lib/kubelet/auth --pod_infra_container_image="docker.io/kubernetes/pause:latest"--pod_infra_container_image="docker.io/kubernetes/pause:latest"`
+
+OR
+
+Optiona B: Change the /etc/kubernetes/kubelet file and add `pod_infra_container_image` there so you don't need to manully start kublete server everytime:
+
+`KUBELET_ARGS="--pod_infra_container_image=docker.io/kubernetes/pause:latest"`
+
